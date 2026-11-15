@@ -5,9 +5,62 @@ description: Study YouTube courses with the user through coursekit, a local cour
 
 # coursekit: studying video courses together
 
-The user watches YouTube courses in a local player (http://localhost:8765). The player reports what
-they are watching. Every lesson has a timestamped transcript and Claude-written notes, stored as
-markdown in the coursekit library. You reach all of it through the `coursekit` MCP tools.
+coursekit is open source: **https://github.com/anonx3247/coursekit**. The user watches YouTube courses
+in its local player (http://localhost:8765). The player reports what they are watching. Every lesson
+has a timestamped transcript and Claude-written notes, stored as markdown in the coursekit library.
+You reach all of it through the `coursekit` MCP tools.
+
+In this skill, `<repo>` is where coursekit is cloned (usually `~/dev/coursekit`; check with
+`ls ~/dev/coursekit` or search for a `pyproject.toml` with `name = "coursekit"`).
+
+## Before you start: make sure it's installed and running
+
+1. **MCP tools available** (`now_playing`, `open_player`, …)? Then it's installed. If the player isn't
+   running, `open_player` (or `seek`) starts it automatically. Give the user the URL it returns.
+2. **No MCP tools, but you have a shell** (Claude Code)? Check whether `<repo>` exists:
+   - It exists: start the player with `cd <repo> && uv run ck open` (it starts the server in the
+     background and opens the browser). Read `<repo>/library/.state/now_playing.json` and the lesson
+     files directly. Offer to register the MCP server (step 4 below) so it's there next time.
+   - It doesn't exist: offer to install it (next section).
+3. **No MCP tools and no shell** (e.g. the Claude app without the connector)? Tell the user to install
+   coursekit from the repo above and register the MCP server. Give them the commands from the next
+   section to paste into a terminal or into Claude Code.
+
+## Installing coursekit (for this user or someone else's machine)
+
+Prerequisites: macOS or Linux, [uv](https://docs.astral.sh/uv/) (`curl -LsSf https://astral.sh/uv/install.sh | sh`
+or `brew install uv`), `ffmpeg` (`brew install ffmpeg` / `apt install ffmpeg`), `git`, and Claude Code
+(`claude` on PATH; it's used headlessly to write notes, so no API key is needed). On Apple Silicon,
+Whisper runs with mlx-whisper; elsewhere it uses faster-whisper (a GPU helps).
+
+```bash
+# 1. Clone + install dependencies
+mkdir -p ~/dev && git clone https://github.com/anonx3247/coursekit ~/dev/coursekit
+cd ~/dev/coursekit && uv sync
+
+# 2. Smoke test
+uv run ck --help && uv run ck profiles
+
+# 3. Claude Code: MCP server + this skill
+claude mcp add --scope user coursekit -- "$(which uv)" run --directory ~/dev/coursekit ck mcp
+mkdir -p ~/.claude/skills && ln -sfn ~/dev/coursekit/skills/coursekit ~/.claude/skills/coursekit
+
+# 4. Claude desktop app: add this to the "mcpServers" object in
+#    macOS:   ~/Library/Application Support/Claude/claude_desktop_config.json
+#    Windows: %APPDATA%\Claude\claude_desktop_config.json
+#    { "coursekit": { "command": "<absolute path to uv>", "args": ["run", "--directory", "<absolute repo path>", "ck", "mcp"] } }
+#    Use absolute paths: the app doesn't load your shell PATH. Back up the file first, merge (don't
+#    overwrite), then restart the app. For the skill: cd skills && zip -r ../coursekit-skill.zip coursekit,
+#    then upload it in Settings → Capabilities → Skills.
+```
+
+When doing this for the user, run the steps yourself (with their OK before editing app config files),
+then verify: `uv run ck list` works, and the MCP server answers. In Claude Code, `claude mcp list`
+should show coursekit as connected. Finally, help them add a first course (`uv run ck add <playlist-url>
+--profile … --language …`) and process one lesson (`uv run ck process <course> 1`) to check the pipeline.
+
+Updating: `cd <repo> && git pull && uv sync`. Course data in `<repo>/library/` is gitignored and survives
+updates (relocate it with `COURSEKIT_LIBRARY`).
 
 ## Golden rule: ground every answer in the moment
 
@@ -33,7 +86,7 @@ misheard (e.g. "bowline sciences" means "bovine sciences"). Correct these silent
 | "Summarise this lesson" / "what's next?" | `get_notes(course, lesson)`. For the course as a whole, use `get_course(course)`. |
 | "Can I skip this?" | Check the current chapter in `now_playing` and the outline in `get_notes`. Chapters marked `{skip: …}` are filler. Tell them where the substance resumes and offer to `seek` there. |
 | "Quiz me" | Use the notes' Key points and Review questions for the lesson(s) watched. Ask one question at a time. |
-| "Add this playlist" | `add_course(url, profile, language)`. Profiles: `islamic`, `ml`, `stem`, `default`. Then `process_lesson` for a lesson, or tell them to run `uv run ck process <course>` in `~/dev/coursekit` for the whole course. |
+| "Add this playlist" | `add_course(url, profile, language)`. Profiles: `islamic`, `ml`, `stem`, `default`. Then `process_lesson` for a lesson, or tell them to run `uv run ck process <course>` in `<repo>` for the whole course. |
 | "Speed up / pause / next chapter" | `player_control(action="rate", value=1.75)`, `pause`, `play`, `skip_section`, `back`. |
 
 ## Save what's worth keeping
@@ -45,13 +98,13 @@ them a timestamp (`at`) when they relate to a moment. Don't save small talk.
 
 ## Library on disk (for Claude Code / file access)
 
-`~/dev/coursekit/library/<course>/lessons/<NNN>-<slug>/` holds `transcript.md` (paragraphs prefixed
+`<repo>/library/<course>/lessons/<NNN>-<slug>/` holds `transcript.md` (paragraphs prefixed
 with `**[hh:mm:ss](link)**`), `notes.md` (TL;DR, `## Outline` chapters as `- [hh:mm:ss] Title {skip: reason}`,
 `## Key points`, `## Detailed notes`, Key terms, profile sections, Review questions), and `annotations.md`.
-`library/.state/now_playing.json` holds the current position. Prefer the MCP tools when available.
+`<repo>/library/.state/now_playing.json` holds the current position. Prefer the MCP tools when available.
 Read the files directly for bulk work, such as building a course-wide glossary or comparing lessons.
 
-CLI (run in `~/dev/coursekit`): `uv run ck list -v`, `uv run ck process <course> [1-5]`,
+CLI (run in `<repo>`): `uv run ck list -v`, `uv run ck process <course> [1-5]`,
 `uv run ck process <course> 3 --notes-only --force-notes`, `uv run ck open <course> <lesson>`,
 `uv run ck set <course> notes_language French`.
 
