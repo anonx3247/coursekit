@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>coursekit</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<aside id="sidebar">
+  <div class="brand"><span>coursekit</span><button id="toggle-sidebar" title="Hide sidebar (b)">⟨</button></div>
+  <input id="filter" placeholder="Filter lessons…">
+  <div id="courses"></div>
+</aside>
+
+<main id="main">
+  <div id="empty" class="empty">
+    <h2>Pick a lesson</h2>
+    <p>Add courses with <code>ck add &lt;playlist-url&gt;</code>, then <code>ck process &lt;course&gt;</code>.</p>
+  </div>
+  <div id="stage" hidden>
+    <div class="titlebar">
+      <button id="show-sidebar" title="Show sidebar (b)" hidden>☰</button>
+      <div>
+        <div id="course-title" class="muted"></div>
+        <h1 id="lesson-title"></h1>
+      </div>
+    </div>
+    <div class="video-wrap"><div id="player"></div></div>
+    <div id="timeline" title="Outline — click to jump; hatched = skippable"><div id="cursor"></div></div>
+    <div id="section-now" class="muted"></div>
+    <div class="controls">
+      <div class="group">
+        <button data-act="back" title="Back 10s (← / j)">−10s</button>
+        <button data-act="play" id="play-btn" title="Play/pause (space / k)">▶</button>
+        <button data-act="fwd" title="Forward 10s (→ / l)">+10s</button>
+        <button data-act="prev-sec" title="Previous section (p)">⏮ section</button>
+        <button data-act="next-sec" title="Skip to next section (s)">section ⏭</button>
+      </div>
+      <div class="group" id="rates"></div>
+      <div class="group">
+        <label class="toggle" title="Automatically skip sections marked {skip} in the notes (a)"><input type="checkbox" id="autoskip"> auto-skip</label>
+        <button data-act="copy" title="Copy a context line to paste into Claude (c)">Ask Claude ⧉</button>
+        <button data-act="next-lesson" title="Next lesson (n)">next lesson →</button>
+      </div>
+    </div>
+    <div id="process-bar" class="banner" hidden>
+      <span id="process-msg"></span> <button id="process-btn">Transcribe & write notes</button>
+    </div>
+  </div>
+</main>
+
+<section id="panel">
+  <nav class="tabs">
+    <button data-tab="notes" class="active">Notes</button>
+    <button data-tab="transcript">Transcript</button>
+    <button data-tab="qa">Q&amp;A <span id="qa-count"></span></button>
+  </nav>
+  <div id="tab-notes" class="tab md"></div>
+  <div id="tab-transcript" class="tab" hidden>
+    <label class="toggle follow"><input type="checkbox" id="follow" checked> follow playback</label>
+    <div id="transcript"></div>
+  </div>
+  <div id="tab-qa" class="tab md" hidden></div>
+</section>
+
+<div id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
