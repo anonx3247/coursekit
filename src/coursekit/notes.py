@@ -31,14 +31,22 @@ Output ONLY the markdown document, starting with the H1 line. Use exactly this s
 2–4 sentences: what this lesson covers and the main takeaways.
 
 ## Outline
-One line per section, chronological, 5–25 sections, STRICT format (the player parses it):
-- [hh:mm:ss] Section title
-Append ` {{skip: reason}}` to sections a focused learner can safely skip: logistics, housekeeping,
+The lesson's chapters, shown as a chapter bar under the video. One line per chapter, chronological,
+STRICT format (the player parses it):
+- [hh:mm:ss] Chapter title
+Chapters follow real topic changes, NOT transcript paragraphs: typically one chapter per 3–10 minutes
+(about 3–6 for a 15-minute video, 8–20 for a 2-hour lecture). Short, specific titles (≤ 8 words).
+Append ` {{skip: reason}}` to chapters a focused learner can safely skip: logistics, housekeeping,
 long digressions unrelated to the topic, Q&A that repeats content, breaks, dead air, sound checks,
 recap of the previous lesson. Be conservative; never mark core content as skip.
 
-## Notes
-Detailed notes per section, with `### [hh:mm:ss] Section title` headings matching the outline.
+## Key points
+The short notes to remember the lesson by: 5–12 bullets with the essential ideas, results, and
+definitions, each ending with the [hh:mm:ss] where it is taught. Dense and memorable; no filler.
+Someone who reads only TL;DR + Key points should retain the core of the lesson.
+
+## Detailed notes
+Full notes per chapter, with `### [hh:mm:ss] Chapter title` headings matching the outline.
 Capture definitions, arguments, examples, formulas, lists, and anything the speaker emphasises.
 
 ## Key terms

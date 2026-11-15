@@ -4,8 +4,8 @@ A local companion for learning from YouTube courses with Claude.
 
 - **Ingest** any playlist or video (public or unlisted), given its URL.
 - **Transcribe**: uses YouTube subtitles when they exist, and runs local Whisper otherwise (`mlx-whisper` on Apple Silicon, `faster-whisper` elsewhere).
-- **Write notes** for every lesson with Claude: a TL;DR, a timestamped outline that **marks skippable sections**, detailed notes, key terms, review questions, plus profile-specific extras (verified hadith/Quran references, code examples, equations…).
-- **Watch** in a focused local player: speed controls, ±10s, jump by section, **auto-skip** filler, a synced clickable transcript, notes with clickable timestamps, and resume position.
+- **Write notes** for every lesson with Claude: a TL;DR, **chapters** that mark skippable filler, short **key points**, separate **detailed notes**, key terms and review questions. Profiles add extras: verified hadith and Quran references, code examples, equations, and so on.
+- **Watch** in a focused local player: a chapter bar and list under the video, speed controls, ±10s, jump by chapter, **auto-skip** filler, a synced clickable transcript, Notes and Detailed tabs with clickable timestamps, and resume position.
 - **Ask Claude on the side**: an MCP server lets the Claude app or Claude Code see *what you're watching right now*, read the transcript around that moment, search the whole library, move the player, and save answers, references and code back next to the lesson.
 
 Everything is stored as plain markdown, so any agent can use it as context.
@@ -87,6 +87,15 @@ Then, with the player open, ask things like:
 | `add_course`, `process_lesson` | ingest from chat |
 
 The MCP server starts the web player automatically if it isn't running.
+
+### Skill
+
+[`skills/coursekit/SKILL.md`](skills/coursekit/SKILL.md) teaches Claude how to study with you. It grounds every answer in `now_playing`, verifies references before saving them, writes code for ML lectures, quizzes you from the key points, and so on.
+
+```bash
+ln -s "$PWD/skills/coursekit" ~/.claude/skills/coursekit       # Claude Code
+cd skills && zip -r ../coursekit-skill.zip coursekit           # Claude app: Settings → Capabilities → Skills → upload
+```
 
 ## Library layout
 

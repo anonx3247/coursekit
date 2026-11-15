@@ -88,12 +88,26 @@ async function openLesson(slug, idx, t) {
   loadVideo(data.lesson.video_id, start);
 }
 
+// Split notes.md: the Outline goes to the chapter bar, "Detailed notes" to its own tab, the rest is the short notes.
+function splitNotes(md) {
+  const parts = md.split(/^(?=## )/m);
+  const short = [], detailed = [];
+  for (const p of parts) {
+    const h = (p.match(/^## (.*)/) || [])[1]?.trim().toLowerCase();
+    if (h === "outline") continue;
+    (h === "detailed notes" || h === "notes" ? detailed : short).push(p);
+  }
+  return { short: short.join(""), detailed: detailed.join("").replace(/^## .*\n/, "") };
+}
+
 function renderPanel() {
   const d = S.cur;
-  const notes = $("#tab-notes");
-  notes.innerHTML = d.notes ? renderMd(d.notes)
-    : `<p class="muted">No notes yet${d.paragraphs.length ? " (transcript available)" : ""}.</p>`;
-  wireLinks(notes);
+  const notes = $("#tab-notes"), det = $("#tab-detailed");
+  const none = `<p class="muted">No notes yet${d.paragraphs.length ? " (transcript available)" : ""}.</p>`;
+  const sp = d.notes ? splitNotes(d.notes) : null;
+  notes.innerHTML = sp ? renderMd(sp.short) : none;
+  det.innerHTML = sp && sp.detailed.trim() ? renderMd(sp.detailed) : none;
+  wireLinks(notes); wireLinks(det);
   $("#transcript").innerHTML = d.paragraphs.length
     ? `<p class="muted">Source: ${esc(d.transcript_source)}</p>` + d.paragraphs.map((p, i) =>
       `<div class="para" data-i="${i}" data-t="${p.start}"><a class="ts" data-t="${p.start}">${fmt(p.start)}</a>${esc(p.text)}</div>`).join("")
@@ -122,11 +136,37 @@ function renderTimeline() {
     seg.className = "seg" + (it.skip ? " skip" : "");
     seg.style.left = `${(it.t / dur) * 100}%`;
     seg.style.width = `${((end - it.t) / dur) * 100}%`;
-    seg.title = `${fmt(it.t)} ${it.title}${it.skip ? ` (skip: ${it.skip_reason})` : ""}`;
     seg.onclick = (e) => { e.stopPropagation(); seekTo(it.t); };
     tl.appendChild(seg);
   });
+  renderChapters();
 }
+
+function renderChapters() {
+  const o = S.cur.outline, dur = S.cur.lesson.duration || 0;
+  $("#chapters").innerHTML = o.length ? `<div class="ch-head muted">Chapters</div>` + o.map((it, i) => {
+    const end = i + 1 < o.length ? o[i + 1].t : dur;
+    return `<button class="chapter ${it.skip ? "skip" : ""}" data-i="${i}" data-t="${it.t}">
+      <span class="ch-t">${fmt(it.t)}</span><span class="ch-title">${esc(it.title)}</span>
+      ${it.skip ? `<span class="skiptag" title="${esc(it.skip_reason)}">skip</span>` : ""}
+      <span class="ch-len muted">${Math.max(1, Math.round((end - it.t) / 60))} min</span></button>`;
+  }).join("") : "";
+}
+$("#chapters").addEventListener("click", (e) => { const b = e.target.closest(".chapter"); if (b) seekTo(parseFloat(b.dataset.t)); });
+
+// instant, large hover tooltip on the timeline
+$("#timeline").addEventListener("mousemove", (e) => {
+  if (!S.cur) return;
+  const r = e.currentTarget.getBoundingClientRect(), x = e.clientX - r.left;
+  const t = (x / r.width) * (S.cur.lesson.duration || 0), i = sectionIndex(t), o = S.cur.outline;
+  const tip = $("#tip");
+  tip.innerHTML = `<b>${fmt(t)}</b>${i >= 0 ? ` · ${esc(o[i].title)}${o[i].skip ? ` <span class="skiptag">skip${o[i].skip_reason ? ": " + esc(o[i].skip_reason) : ""}</span>` : ""}` : ""}`;
+  tip.hidden = false;
+  const w = tip.offsetWidth, tlr = $("#timeline").offsetLeft;
+  tip.style.left = `${Math.min(Math.max(tlr + x - w / 2, tlr), tlr + r.width - w)}px`;
+  $("#hover-line").style.left = `${x}px`; $("#hover-line").style.display = "block";
+});
+$("#timeline").addEventListener("mouseleave", () => { $("#tip").hidden = true; $("#hover-line").style.display = "none"; });
 $("#timeline").addEventListener("click", (e) => {
   const r = e.currentTarget.getBoundingClientRect();
   seekTo(((e.clientX - r.left) / r.width) * (S.cur.lesson.duration || 0));
@@ -218,6 +258,7 @@ function tick(force) {
   if (dur) $("#cursor").style.left = `${(t / dur) * 100}%`;
   const o = S.cur.outline, i = sectionIndex(t);
   $("#section-now").innerHTML = i >= 0 ? `<b>${fmt(o[i].t)}</b> ${esc(o[i].title)}${o[i].skip ? ` <span class="skiptag">skip: ${esc(o[i].skip_reason)}</span>` : ""}` : "";
+  document.querySelectorAll(".chapter").forEach((b) => b.classList.toggle("now", +b.dataset.i === i));
   // auto-skip
   const playing = S.player.getPlayerState() === YT.PlayerState.PLAYING;
   if (S.autoskip && playing && i >= 0 && o[i].skip && S.lastSkipFrom !== i) {
@@ -304,7 +345,7 @@ $("#toggle-sidebar").onclick = toggleSidebar; $("#show-sidebar").onclick = toggl
 
 document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => {
   document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("active", x === b));
-  ["notes", "transcript", "qa"].forEach((t) => ($(`#tab-${t}`).hidden = t !== b.dataset.tab));
+  ["notes", "detailed", "transcript", "qa"].forEach((t) => ($(`#tab-${t}`).hidden = t !== b.dataset.tab));
   if (b.dataset.tab === "transcript") tick(true);
 });
 

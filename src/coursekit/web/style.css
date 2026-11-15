@@ -75,3 +75,19 @@ a.ts { color: var(--accent); cursor: pointer; font-variant-numeric: tabular-nums
   border: 1px solid var(--accent); padding: 8px 14px; border-radius: 8px; font-size: 14px; z-index: 10; }
 
 @media (max-width: 1200px) { body { grid-template-columns: 0 minmax(0, 1fr) 380px; } #sidebar { display: none; } }
+
+/* chapters & timeline tooltip */
+.stage-rel, #stage { position: relative; }
+#timeline { height: 26px; }
+#hover-line { position: absolute; top: 0; bottom: 0; width: 1px; background: #fff8; display: none; pointer-events: none; z-index: 2; }
+#tip { position: absolute; margin-top: 6px; background: var(--bg3); border: 1px solid var(--accent); color: var(--fg);
+  padding: 6px 10px; border-radius: 6px; font-size: 14px; white-space: nowrap; z-index: 5; pointer-events: none;
+  box-shadow: 0 4px 16px #0008; }
+#chapters { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px; }
+.ch-head { grid-column: 1 / -1; text-transform: uppercase; letter-spacing: .06em; font-size: 11px; margin-bottom: 2px; }
+.chapter { display: flex; gap: 8px; align-items: baseline; text-align: left; padding: 7px 10px; background: var(--bg2); }
+.chapter .ch-t { color: var(--accent); font-variant-numeric: tabular-nums; font-size: 12px; }
+.chapter .ch-title { flex: 1; }
+.chapter .ch-len { font-size: 11px; white-space: nowrap; }
+.chapter.now { background: var(--accent2); border-color: var(--accent); }
+.chapter.skip .ch-title { color: var(--muted); }

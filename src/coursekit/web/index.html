@@ -28,7 +28,8 @@
       </div>
     </div>
     <div class="video-wrap"><div id="player"></div></div>
-    <div id="timeline" title="Outline — click to jump; hatched = skippable"><div id="cursor"></div></div>
+    <div id="timeline"><div id="cursor"></div><div id="hover-line"></div></div>
+    <div id="tip" hidden></div>
     <div id="section-now" class="muted"></div>
     <div class="controls">
       <div class="group">
@@ -45,6 +46,7 @@
         <button data-act="next-lesson" title="Next lesson (n)">next lesson →</button>
       </div>
     </div>
+    <div id="chapters"></div>
     <div id="process-bar" class="banner" hidden>
       <span id="process-msg"></span> <button id="process-btn">Transcribe & write notes</button>
     </div>
@@ -54,10 +56,12 @@
 <section id="panel">
   <nav class="tabs">
     <button data-tab="notes" class="active">Notes</button>
+    <button data-tab="detailed">Detailed</button>
     <button data-tab="transcript">Transcript</button>
     <button data-tab="qa">Q&amp;A <span id="qa-count"></span></button>
   </nav>
   <div id="tab-notes" class="tab md"></div>
+  <div id="tab-detailed" class="tab md" hidden></div>
   <div id="tab-transcript" class="tab" hidden>
     <label class="toggle follow"><input type="checkbox" id="follow" checked> follow playback</label>
     <div id="transcript"></div>
