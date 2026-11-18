@@ -123,10 +123,16 @@ def generate_notes(course: dict, lesson: dict, overwrite: bool = False, model: s
     model = model or os.environ.get("COURSEKIT_NOTES_MODEL") or meta.get("model")
     if model:
         cmd += ["--model", model]
-    res = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=str(lib.state_dir()),
-                         timeout=60 * 30)
+    for attempt in range(2):
+        res = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=str(lib.state_dir()),
+                             timeout=60 * 30)
+        if res.returncode == 0:
+            break
     if res.returncode != 0:
-        raise RuntimeError(f"claude failed: {res.stderr.strip()[:500] or res.stdout.strip()[:500]}")
+        # drop the sign-in expiry warning so the real error is visible
+        err = "\n".join(x for x in (res.stderr + "\n" + res.stdout).splitlines()
+                        if x.strip() and not x.startswith("Warning: this sign-in"))
+        raise RuntimeError(f"claude exited {res.returncode}: {err.strip()[-800:] or '(no output)'}")
     text = res.stdout
     i = text.find("\n# ") if not text.startswith("# ") else 0
     text = text[i:].lstrip() if i >= 0 else text

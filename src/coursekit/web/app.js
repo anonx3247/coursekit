@@ -176,8 +176,10 @@ function renderProcessBar() {
   const d = S.cur;
   const missing = !d.paragraphs.length ? "No transcript or notes yet." : !d.notes ? "Transcript ready, no notes yet." : "";
   $("#process-bar").hidden = !missing && !d.job_running;
-  $("#process-msg").textContent = d.job_running ? "Processing… (this page refreshes when done)" : missing;
+  $("#process-msg").innerHTML = d.job_running ? "Processing… (this page refreshes when done)"
+    : esc(missing) + (d.job_error ? `<pre class="job-error">Last attempt failed:\n${esc(d.job_error)}</pre>` : "");
   $("#process-btn").hidden = d.job_running;
+  $("#process-btn").textContent = d.job_error ? "Retry" : "Transcribe & write notes";
 }
 $("#process-btn").onclick = async () => {
   await api(`/api/process/${S.cur.course.slug}/${S.cur.lesson.index}`, { method: "POST" });
@@ -188,7 +190,7 @@ function watchJob() {
   const h = setInterval(async () => {
     if (!S.cur || `${S.cur.course.slug}/${S.cur.lesson.index}` !== key) return clearInterval(h);
     const d = await api(`/api/lesson/${S.cur.course.slug}/${S.cur.lesson.index}`);
-    if (!d.job_running) { clearInterval(h); refreshLesson(); loadCourses(); toast("Processing finished"); }
+    if (!d.job_running) { clearInterval(h); refreshLesson(); loadCourses(); toast(d.job_error ? "Processing failed (details below the video)" : "Processing finished"); }
   }, 5000);
 }
 async function refreshLesson() {

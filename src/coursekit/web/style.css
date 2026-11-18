@@ -91,3 +91,5 @@ a.ts { color: var(--accent); cursor: pointer; font-variant-numeric: tabular-nums
 .chapter .ch-len { font-size: 11px; white-space: nowrap; }
 .chapter.now { background: var(--accent2); border-color: var(--accent); }
 .chapter.skip .ch-title { color: var(--muted); }
+.job-error { margin: 8px 0 4px; padding: 8px; background: #2a1414; border: 1px solid #ff8a6566; border-radius: 6px;
+  color: #ffb199; font-size: 12px; white-space: pre-wrap; max-height: 160px; overflow-y: auto; }

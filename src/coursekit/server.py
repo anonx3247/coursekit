@@ -40,6 +40,15 @@ def now_playing_file() -> Path:
     return lib.state_dir() / "now_playing.json"
 
 
+def _job_error(c: dict, l: dict, job, notes) -> str | None:
+    """If the last job for this lesson finished without producing notes, return the end of its log."""
+    if not job or job.poll() is None or notes:
+        return None
+    log = lib.state_dir() / "jobs" / f"{c['slug']}-{l['index']}.log"
+    lines = [x for x in (lib.read_text(log) or "").splitlines() if x.strip()]
+    return "\n".join(lines[-6:]) or f"job exited with code {job.returncode}"
+
+
 # ---------- routes ----------
 
 async def index(_: Request):
@@ -77,6 +86,7 @@ async def api_lesson(request: Request):
         "annotations": lib.read_text(d / "annotations.md"),
         "position": prog.get("t", 0),
         "job_running": bool(job and job.poll() is None),
+        "job_error": _job_error(c, l, job, notes),
         "dir": str(d),
     })
 
@@ -134,7 +144,8 @@ async def api_process(request: Request):
     log.mkdir(exist_ok=True)
     f = open(log / f"{c['slug']}-{l['index']}.log", "a")  # noqa: SIM115
     _jobs[key] = subprocess.Popen([sys.executable, "-m", "coursekit.cli", "process", c["slug"], str(l["index"])],
-                                  stdout=f, stderr=subprocess.STDOUT)
+                                  stdout=f, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                  start_new_session=True)
     return JSONResponse({"status": "started"})
 
 
