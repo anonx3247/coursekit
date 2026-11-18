@@ -109,6 +109,13 @@ def cmd_open(a):
     webbrowser.open(url)
 
 
+def cmd_anki(a):
+    from pathlib import Path
+    from .anki import build
+    out, n = build(a.course, Path(a.out) if a.out else None, a.deck)
+    print(f"{n} cards → {out}")
+
+
 def cmd_mcp(_):
     from .mcp_server import run
     run()
@@ -166,6 +173,12 @@ def main(argv: list[str] | None = None):
     s.add_argument("course", nargs="?")
     s.add_argument("lesson", nargs="?")
     s.set_defaults(fn=cmd_open)
+
+    s = sub.add_parser("anki", help="build an Anki .apkg from <course>/anki/cards.json")
+    s.add_argument("course")
+    s.add_argument("--out")
+    s.add_argument("--deck", help="root deck name (default: course title)")
+    s.set_defaults(fn=cmd_anki)
 
     sub.add_parser("mcp", help="run the MCP server (stdio)").set_defaults(fn=cmd_mcp)
     sub.add_parser("profiles", help="list note profiles").set_defaults(fn=cmd_profiles)
