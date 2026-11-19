@@ -74,24 +74,35 @@ def _inline(s: str) -> str:
 
 
 def md(text: str) -> str:
-    """Tiny markdown: paragraphs, '- ' and '1. ' lists (one level), bold/italic, links, Arabic spans."""
-    out, mode = [], None
+    """Tiny markdown: paragraphs, '- ' and '1. ' lists (two levels: indent 2+ spaces to nest),
+    bold/italic, links, Arabic spans."""
+    out: list[str] = []
+    stack: list[str] = []  # open list tags; each open level has an unclosed <li> at its end
+
+    def close_to(depth: int) -> None:
+        while len(stack) > depth:
+            out.append(f"</li></{stack.pop()}>")
+
     for raw in (text or "").splitlines():
         line = raw.rstrip()
-        m_ul, m_ol = re.match(r"^\s*[-*]\s+(.*)", line), re.match(r"^\s*\d+[.)]\s+(.*)", line)
-        want = "ul" if m_ul else "ol" if m_ol else None
-        if want != mode:
-            if mode:
-                out.append(f"</{mode}>")
-            if want:
-                out.append(f"<{want}>")
-            mode = want
-        if want:
-            out.append(f"<li>{_inline((m_ul or m_ol).group(1))}</li>")
-        elif line.strip():
-            out.append(f"<div>{_inline(line)}</div>")
-    if mode:
-        out.append(f"</{mode}>")
+        m = re.match(r"^(\s*)(?:([-*])|\d+[.)])\s+(.*)", line)
+        if not m:
+            close_to(0)
+            if line.strip():
+                out.append(f"<div>{_inline(line)}</div>")
+            continue
+        depth = 2 if len(m.group(1)) >= 2 and stack else 1
+        kind = "ul" if m.group(2) else "ol"
+        close_to(depth)
+        if len(stack) == depth and stack[-1] != kind:
+            close_to(depth - 1)
+        if len(stack) < depth:
+            out.append(f"<{kind}><li>")
+            stack.append(kind)
+        else:
+            out.append("</li><li>")
+        out.append(_inline(m.group(3)))
+    close_to(0)
     return "".join(out)
 
 
